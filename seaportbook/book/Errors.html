@@ -3,8 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>SeaportBook</title>
-        <meta name="robots" content="noindex" />
+        <title>Errors - SeaportBook</title>
 
 
         <!-- Custom HTML head -->
@@ -81,7 +80,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">Contracts</li><li class="chapter-item expanded "><a href="Conduit.html"><strong aria-hidden="true">2.</strong> Conduit</a></li><li class="chapter-item expanded affix "><li class="part-title">Primer</li><li class="chapter-item expanded "><a href="Errors.html"><strong aria-hidden="true">3.</strong> Errors</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">Contracts</li><li class="chapter-item expanded "><a href="Conduit.html"><strong aria-hidden="true">2.</strong> Conduit</a></li><li class="chapter-item expanded affix "><li class="part-title">Primer</li><li class="chapter-item expanded "><a href="Errors.html" class="active"><strong aria-hidden="true">3.</strong> Errors</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -142,104 +141,14 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
-<p>Welcome to the <b>Seaport Development Book </b>! This book is intended as a primer to understand the seaport protocol at a deeper level and be a better solidity/EVM practitioner.<br />
-<img src="https://user-images.githubusercontent.com/91280922/215570081-18446c6f-076f-4d92-8728-4e950a6d18d5.png" alt="Seaport" /></p>
-<h3 id="resources-to-get-started"><a class="header" href="#resources-to-get-started">Resources to get started</a></h3>
-<ul>
-<li>
-<h4 id="seaport-contract-etherscan"><a class="header" href="#seaport-contract-etherscan">Seaport Contract <a href="https://etherscan.io/address/0x00000000006c3852cbef3e08e8df289169ede581#code">Etherscan</a></a></h4>
-</li>
-<li>
-<h4 id="opensea-docs"><a class="header" href="#opensea-docs">OpenSea <a href="https://docs.opensea.io/v2.0/reference/seaport-overview">Docs</a></a></h4>
-</li>
-</ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="conduit"><a class="header" href="#conduit">Conduit</a></h1>
-<p><code>Conduit allow registered callers to transfer ERC20/721/1155 tokens on the owner's behalf.</code></p>
-<p><img src="https://user-images.githubusercontent.com/91280922/215829233-80a7986b-5701-4e48-b014-8d90dba0132c.svg" alt="Conduit" /></p>
-<h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
-<h3 id="onlyopenchannel"><a class="header" href="#onlyopenchannel">onlyOpenChannel()</a></h3>
-<pre><code class="language-solidity"> /**
-     * @notice Ensure that the caller is currently registered as an open channel
-     *         on the conduit.
-     */
-    modifier onlyOpenChannel() {
-        // Utilize assembly to access channel storage mapping directly.
-        assembly {
-            // Write the caller to scratch space.
-            mstore(ChannelKey_channel_ptr, caller())
-
-            // Write the storage slot for _channels to scratch space.
-            mstore(ChannelKey_slot_ptr, _channels.slot)
-
-            // Derive the position in storage of _channels[msg.sender]
-            // and check if the stored value is zero.
-            if iszero(
-                sload(keccak256(ChannelKey_channel_ptr, ChannelKey_length))
-            ) {
-                // The caller is not an open channel; revert with
-                // ChannelClosed(caller). First, set error signature in memory.
-                mstore(ChannelClosed_error_ptr, ChannelClosed_error_signature)
-
-                // Next, set the caller as the argument.
-                mstore(ChannelClosed_channel_ptr, caller())
-
-                // Finally, revert, returning full custom error with argument.
-                revert(ChannelClosed_error_ptr, ChannelClosed_error_length)
-            }
-        }
-
-        // Continue with function execution.
-        _;
-    }
-</code></pre>
-<p>Suppose caller is <code>Bob</code> . 
-To ascertain whether Bob is allowed to call ,we need to check if <code>_channels[msg.sender]</code> == <code>Bob</code> .</p>
-<p>First step : Store the caller in memory at an appropriate offset. </p>
-<pre><code>            mstore(ChannelKey_channel_ptr, caller())
-</code></pre>
-<p>Here , we are storing the 20 bytes address at offset <code>ChannelKey_channel_ptr</code>(0x00Defined in ConduitConstants). </p>
-<p>Say address(Bob) = 0x1b37B1EC6B7faaCbB9AddCCA4043824F36Fb88D8</p>
-<ul>
-<li>Memory Layout :</li>
-</ul>
-<pre><code>0x00 0x0000000000000000000000001b37b1ec6b7faacbb9addcca4043824f36fb88d8
-</code></pre>
-<p>To access the ``_channels[msg.sender]<code>slot key, the formula is </code>keccak256(account,_channels.slot)`</p>
-<p>** Note :=</p>
-<ul>
-<li>_channels.slot will return the general slot number, not the value.</li>
-</ul>
-<p>Hence we store the slot number of _channels in the next memory layout.</p>
-<pre><code class="language-solidity">mstore(ChannelKey_slot_ptr, _channels.slot)
-</code></pre>
-<p>ChannelKey_slot_ptr = 0x20(as defined by the contract)
-_channels.slot = 0 (As it is the first word of the storage layout , Tested via <code>forge inspect &lt;path&gt; storage</code> command)</p>
-<ul>
-<li>Memory Layout :-</li>
-</ul>
-<pre><code>0x00 0x0000000000000000000000001b37b1ec6b7faacbb9addcca4043824f36fb88d8
-0x20 0x0000000000000000000000000000000000000000000000000000000000000000
-</code></pre>
-<p>Now using these 2 values , we calculate the slot of <code>_channels[Bob]</code> </p>
-<pre><code class="language-solidity">sload(keccak256(ChannelKey_channel_ptr, ChannelKey_length))
-</code></pre>
-<p>We use the keccak256 function for this . 
-The first input is the offset of the data .
-Second input is the no of bytes of the data to capture .
-We know that ,
-ChannelKey_channel_ptr= 0x00
-ChannelKey_length = 0x40</p>
-<p>All this was done to get this <code>keccak256(account,_channels.slot)</code>
-This opcode will return Hash at the top of the stack .Now we use <code>SLOAD</code> to get the value using the key a.k.a hash</p>
-<p>If <code>Bob</code> is an open channel (=1 ), we continue the function execution . But if Bob is not an open channel(=0) , i.e we receive false :-</p>
-<p>We throw a custom error message <code>ChannelClosed(caller)</code></p>
-<p>For more details on how to throw a custom error message , <a href="./Errors.html">here</a></p>
-<div style="break-before: page; page-break-before: always;"></div>
+                        
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="Conduit.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
 
 
                         <div style="clear: both"></div>
@@ -248,6 +157,9 @@ This opcode will return Hash at the top of the stack .Now we use <code>SLOAD</co
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="Conduit.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
 
             </nav>
 
@@ -271,11 +183,6 @@ This opcode will return Hash at the top of the stack .Now we use <code>SLOAD</co
 
         <!-- Custom JS scripts -->
 
-        <script>
-        window.addEventListener('load', function() {
-            window.setTimeout(window.print, 100);
-        });
-        </script>
 
     </body>
 </html>

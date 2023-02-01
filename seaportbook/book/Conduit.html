@@ -80,7 +80,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">Contracts</li><li class="chapter-item expanded "><a href="Conduit.html" class="active"><strong aria-hidden="true">2.</strong> Conduit</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">Contracts</li><li class="chapter-item expanded "><a href="Conduit.html" class="active"><strong aria-hidden="true">2.</strong> Conduit</a></li><li class="chapter-item expanded affix "><li class="part-title">Primer</li><li class="chapter-item expanded "><a href="Errors.html"><strong aria-hidden="true">3.</strong> Errors</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -185,9 +185,11 @@ To ascertain whether Bob is allowed to call ,we need to check if <code>_channels
 <p>First step : Store the caller in memory at an appropriate offset. </p>
 <pre><code>            mstore(ChannelKey_channel_ptr, caller())
 </code></pre>
-<p>Here , we are storing the 20 bytes address at offset <code>ChannelKey_channel_ptr</code> , which is equal to 0x00(Defined in ConduitConstants). 
-Say address(Bob) = 0x1b37B1EC6B7faaCbB9AddCCA4043824F36Fb88D8
-Memory Layout :</p>
+<p>Here , we are storing the 20 bytes address at offset <code>ChannelKey_channel_ptr</code>(0x00Defined in ConduitConstants). </p>
+<p>Say address(Bob) = 0x1b37B1EC6B7faaCbB9AddCCA4043824F36Fb88D8</p>
+<ul>
+<li>Memory Layout :</li>
+</ul>
 <pre><code>0x00 0x0000000000000000000000001b37b1ec6b7faacbb9addcca4043824f36fb88d8
 </code></pre>
 <p>To access the ``_channels[msg.sender]<code>slot key, the formula is </code>keccak256(account,_channels.slot)`</p>
@@ -195,12 +197,14 @@ Memory Layout :</p>
 <ul>
 <li>_channels.slot will return the general slot number, not the value.</li>
 </ul>
-<p>So we will store the slot number of _channels in the next memory layout.</p>
+<p>Hence we store the slot number of _channels in the next memory layout.</p>
 <pre><code class="language-solidity">mstore(ChannelKey_slot_ptr, _channels.slot)
 </code></pre>
 <p>ChannelKey_slot_ptr = 0x20(as defined by the contract)
 _channels.slot = 0 (As it is the first word of the storage layout , Tested via <code>forge inspect &lt;path&gt; storage</code> command)</p>
-<p>Memory Layout :-</p>
+<ul>
+<li>Memory Layout :-</li>
+</ul>
 <pre><code>0x00 0x0000000000000000000000001b37b1ec6b7faacbb9addcca4043824f36fb88d8
 0x20 0x0000000000000000000000000000000000000000000000000000000000000000
 </code></pre>
@@ -213,13 +217,11 @@ Second input is the no of bytes of the data to capture .
 We know that ,
 ChannelKey_channel_ptr= 0x00
 ChannelKey_length = 0x40</p>
-<p>All this was done to get this <code>keccak256(account,_channels.slot)</code></p>
-<p>This opcode will return Hash at the top of the stack .</p>
-<p>Now we use <code>SLOAD</code> to get the value using the key a.k.a hash</p>
-<p>if <code>Bob</code> is an open channel , then it will return 1 , else 0 </p>
-<p>If <code>Bob</code> is an open channel , we continue the function execution . </p>
-<p>But if Bob is not an open channel , i.e we receive false :-</p>
+<p>All this was done to get this <code>keccak256(account,_channels.slot)</code>
+This opcode will return Hash at the top of the stack .Now we use <code>SLOAD</code> to get the value using the key a.k.a hash</p>
+<p>If <code>Bob</code> is an open channel (=1 ), we continue the function execution . But if Bob is not an open channel(=0) , i.e we receive false :-</p>
 <p>We throw a custom error message <code>ChannelClosed(caller)</code></p>
+<p>For more details on how to throw a custom error message , <a href="./Errors.html">here</a></p>
 
                     </main>
 
@@ -229,6 +231,9 @@ ChannelKey_length = 0x40</p>
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
+                            <a rel="next" href="Errors.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -240,6 +245,9 @@ ChannelKey_length = 0x40</p>
                         <i class="fa fa-angle-left"></i>
                     </a>
 
+                    <a rel="next" href="Errors.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
             </nav>
 
         </div>

@@ -5,3 +5,7 @@
 # Contracts
 
 - [Conduit](./Conduit.md)
+
+# Primer
+
+- [Errors](./Errors.md)
