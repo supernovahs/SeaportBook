@@ -237,7 +237,55 @@ This opcode will return Hash at the top of the stack .Now we use <code>SLOAD</co
 <p>If <code>Bob</code> is an open channel (=1 ), we continue the function execution . But if Bob is not an open channel(=0) , i.e we receive false :-</p>
 <p>We throw a custom error message <code>ChannelClosed(caller)</code></p>
 <p>For more details on how to throw a custom error message , <a href="./Errors.html">here</a></p>
-<div style="break-before: page; page-break-before: always;"></div>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="custom-errors-primer"><a class="header" href="#custom-errors-primer">Custom Errors Primer</a></h2>
+<pre><code class="language-solidity"> error Panic(uint code);
+</code></pre>
+<p>Errors in solidity are encoded the same way as functions are encoded.</p>
+<h3 id="how-are-function-encoded"><a class="header" href="#how-are-function-encoded">How are function encoded?</a></h3>
+<p>Let's take an example of this </p>
+<pre><code>function Panic(uint code , string memory error );
+</code></pre>
+<p>code = 43
+error = &quot;Forty three&quot;</p>
+<ul>
+<li>
+<p>Function selector -<code> bytes4(keccak256(bytes(&quot;Panic(uint,string memory)&quot;)))</code></p>
+</li>
+<li>
+<p>uint is static type </p>
+</li>
+<li>
+<p>string is dynamic type </p>
+</li>
+</ul>
+<p>Memory layout </p>
+<p>At <code>0x00</code>, the first parameter , i.e 43 is placed(0x2b in hex) . 
+At <code>0x20</code>, the pointer to the location of the string is placed(in our case : 0x40)
+At <code>0x40</code>, the no. of elements in the string <code>Forty three</code> is 11(0xb)
+At <code>0x60</code>, the string encoded in UTF-8 right padded</p>
+<pre><code>0x00 : 0x000000000000000000000000000000000000000000000000000000000000002b
+0x20 : 0x0000000000000000000000000000000000000000000000000000000000000040
+0x40 : 0x000000000000000000000000000000000000000000000000000000000000000b
+0x60 : 0x466f727479207468726565000000000000000000000000000000000000000000
+</code></pre>
+<p>Final result is :
+Note(<code>0xc0589139</code> is the function signature computed using above formula)</p>
+<pre><code>0xc0589139000000000000000000000000000000000000000000000000000000000000002b0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000b466f727479207468726565000000000000000000000000000000000000000000
+</code></pre>
+<h2 id="similar-to-this-errors-are-also-encoded-in-the-same-way-"><a class="header" href="#similar-to-this-errors-are-also-encoded-in-the-same-way-">Similar to this errors are also encoded in the same way .</a></h2>
+<p>Here' s a full POC on how seaport is returning the errors </p>
+<pre><code>function testFailReturnPanicError() public pure {
+        // Error Panic(uint256 code)
+        assembly{
+        mstore(0,0x77d5a156)
+        mstore(0x20,43)
+        revert(0x1c, 0x24)
+        }
+    }
+
+</code></pre>
+<p><img src="https://user-images.githubusercontent.com/91280922/218412590-d95f8842-0f7f-4ae0-b274-a23116e01de2.png" alt="testPOCPanicError" /></p>
+
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
